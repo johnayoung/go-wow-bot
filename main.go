@@ -6,7 +6,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/johnayoung/go-wow-bot/run"
+	"github.com/johnayoung/go-wow-bot/agent"
 	"github.com/johnayoung/go-wow-bot/state"
 	"github.com/johnayoung/go-wow-bot/ui"
 	"github.com/jroimartin/gocui"
@@ -25,16 +25,17 @@ func main() {
 	}
 	defer g.Close()
 
-	stateView := NewLabel(ui.StateView, g)
-	buffsView := NewLabel(ui.BuffsView, g)
-	spellView := NewLabel(ui.SpellView, g)
-	fl := gocui.ManagerFunc(flowLayout)
-	g.SetManager(stateView, buffsView, spellView, fl)
+	var views []gocui.Manager
+	for _, view := range ui.Views {
+		views = append(views, NewLabel(view, len(ui.Views), g))
+	}
+	views = append(views, gocui.ManagerFunc(flowLayout))
+	g.SetManager(views...)
 
 	stateResults := make(chan state.GameState)
 	errors := make(chan error)
 
-	agent := &run.Agent{
+	agent := &agent.Agent{
 		Status:       "starting",
 		UpdateTicker: updateTicker,
 		Errors:       errors,
@@ -68,10 +69,10 @@ type Label struct {
 	w, h int
 }
 
-func NewLabel(name string, g *gocui.Gui) *Label {
+func NewLabel(name string, numViews int, g *gocui.Gui) *Label {
 	maxX, maxY := g.Size()
 
-	w := maxX / 5
+	w := maxX/numViews - 1
 	h := maxY - 1
 
 	return &Label{name: name, w: w, h: h}
