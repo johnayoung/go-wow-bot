@@ -9,7 +9,6 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
-	"sync"
 
 	"github.com/johnayoung/go-wow-bot/utils"
 )
@@ -254,23 +253,15 @@ type Debuff struct {
 func (s StateManager) getBlock(start, end int, reader SquareReader) []SpellMeta {
 	var spells []SpellMeta
 
-	var wg sync.WaitGroup
-	total := end - start
-	wg.Add(total)
 	for position := start; position < end; position++ {
-		go func(position int) {
-			defer wg.Done()
-			counter := position - start
-			spellID := reader.GetIntAtCell(s.coordinates[position])
-			spellStr := strconv.FormatInt(spellID, 10)
+		counter := position - start
+		spellID := reader.GetIntAtCell(s.coordinates[position])
+		spellStr := strconv.FormatInt(spellID, 10)
 
-			if spell, ok := s.spells[spellStr]; ok {
-				spells = append(spells, SpellMeta{spellID: spellID, camelName: *spell.CamelName, counter: counter})
-			}
-		}(position)
+		if spell, ok := s.spells[spellStr]; ok {
+			spells = append(spells, SpellMeta{spellID: spellID, camelName: *spell.CamelName, counter: counter})
+		}
 	}
-
-	wg.Wait()
 	return spells
 }
 

@@ -29,6 +29,9 @@ var Actions = []Action{
 	CreateManaAction("locustShot", 8, 68, func(s state.GameState) bool {
 		return !inMeleeRange(s)
 	}),
+	CreateManaAction("wrath", 10, 136, func(s state.GameState) bool {
+		return playerHasBuff("wildWrath", s)
+	}),
 }
 
 type Action interface {
@@ -91,6 +94,9 @@ func CreateManaAction(
 	return CreateAction(
 		name,
 		func(s state.GameState) int {
+			if name == "wrath" && playerHasBuff("wildWrath", s) {
+				return 6
+			}
 			return cost
 		},
 		func(s state.GameState) bool {
@@ -102,7 +108,8 @@ func CreateManaAction(
 				extra = addConditions(s, conditions)
 			}
 
-			return spellAvailable &&
+			return s.MemberCombatStatus["playerInCombat"] &&
+				spellAvailable &&
 				haveMana &&
 				extra
 		},
