@@ -18386,6 +18386,56 @@
     "_id": "VErckQ7k1ElwZpKh",
     "camelName": "serpentSting"
   },
+  "25295": {
+    "id": 25295,
+    "name": "Serpent Sting",
+    "imageUrl": "/files/images/icons/Ability_Hunter_Quickshot.png",
+    "type": "Ability",
+    "ranks": {
+      "current": 10,
+      "other": [
+        1978,
+        13549,
+        13550,
+        13551,
+        13552,
+        13553,
+        13554,
+        13555,
+        25295,
+        27016,
+        49000,
+        49001
+      ],
+      "text": "Rank 10"
+    },
+    "cost": {
+      "type": "Base Mana Percentage",
+      "value": 9,
+      "text": "9% of base mana"
+    },
+    "range": {
+      "yards": 35,
+      "type": "Hunter Range",
+      "text": "35 yards"
+    },
+    "castTime": {
+      "seconds": -1000,
+      "type": "Regular",
+      "text": "-1000 second"
+    },
+    "duration": {
+      "seconds": 15,
+      "type": "Regular",
+      "text": "15 seconds"
+    },
+    "tooltip": {
+      "text": "Stings the target, causing <span class=\"ascension-tooltip-spell-tooltip-text-formula\">{[$R]AAPP*<span class=\"ascension-tooltip-spell-tooltip-text-number\">0.3</span>+<span class=\"ascension-tooltip-spell-tooltip-text-number\">132</span>*<span class=\"ascension-tooltip-spell-tooltip-text-number\">15 seconds</span>/3}</span> Nature damage over <span class=\"ascension-tooltip-spell-tooltip-text-number\">15 seconds</span>.",
+      "tooltipUrl": "/spells/27016/tooltip.html"
+    },
+    "_id": "VErckQ7k1ElwZpKh",
+    "camelName": "serpentSting"
+  },
   "27019": {
     "id": 27019,
     "name": "Arcane Shot",
@@ -26265,5 +26315,17 @@
     },
     "_id": "LTb5jEkpYsxDW03v",
     "camelName": "pvEMode"
+  },
+  "954052": {
+    "camelName": "locustShot"
+  },
+  "17348": {
+    "camelName": "hemorrhage"
+  },
+  "11605": {
+    "camelName": "slam"
+  },
+  "954250": {
+    "camelName": "dragonRoar"
   }
 }

@@ -10,7 +10,7 @@ import (
 )
 
 type Agent struct {
-	Status       string
+	Status       chan<- string
 	UpdateTicker <-chan time.Time
 	Errors       chan<- error
 	StateManager state.StateManager
@@ -28,23 +28,18 @@ func (a *Agent) Start() {
 			if err != nil {
 				a.Errors <- err
 			}
-			// title := robotgo.GetTitle()
-
-			// if title == "Ascension" {
-			// }
 		}
 	}
 }
 
 func (a *Agent) evaluate() error {
-
 	state := a.StateManager.Get()
 
 	go func() {
 		a.StateResults <- state
 	}()
 
-	goal, _ := a.determineGoal(state)
+	// goal, _ := a.determineGoal(state)
 
 	title := robotgo.GetTitle()
 	if title != "Ascension" {
@@ -53,7 +48,15 @@ func (a *Agent) evaluate() error {
 
 	// TODO: Perform
 	go func() {
-		action := a.GetBestAction(state)
+		action, _, err := a.GetBestAction(state)
+
+		if err != nil {
+			a.Status <- "No valid action found."
+		} else {
+			a.Status <- fmt.Sprintf("Casting %s", action.String())
+			action.Run(state.FindKeybind(action.String()))
+		}
+
 	}()
 
 	return nil
@@ -91,8 +94,13 @@ func (a *Agent) possibleActions(s state.GameState) []Action {
 	return validActions
 }
 
-func (a *Agent) GetBestAction(s state.GameState) (Action, int) {
+func (a *Agent) GetBestAction(s state.GameState) (Action, int, error) {
 	plans := a.possibleActions(s)
+
+	if len(plans) == 0 {
+		return nil, 0, fmt.Errorf("No possible actions found.")
+	}
+
 	var bestPlan Action = (*DefaultAction)(nil)
 	bestCost := 99999
 	for _, plan := range plans {
@@ -102,5 +110,5 @@ func (a *Agent) GetBestAction(s state.GameState) (Action, int) {
 			bestCost = cost
 		}
 	}
-	return bestPlan, bestCost
+	return bestPlan, bestCost, nil
 }

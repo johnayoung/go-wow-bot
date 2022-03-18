@@ -14,22 +14,57 @@ const (
 	DebuffsView       = "Debuffs"
 	TargetDebuffsView = "TargetDebuffs"
 	SpellView         = "Spells"
+	StatusView        = "Status"
 )
 
-var Views = []string{StateView, BuffsView, DebuffsView, TargetDebuffsView, SpellView}
+var Views = []string{
+	StateView,
+	BuffsView,
+	DebuffsView,
+	TargetDebuffsView,
+	SpellView,
+	StatusView,
+}
 
 const NumGoroutines = 10
 
 type UI struct {
-	// g            *gocui.Gui
 	Errors       chan<- error
 	StateResults <-chan state.GameState
+	Status       <-chan string
 }
 
 func (ui *UI) Start(g *gocui.Gui) {
-	for state := range ui.StateResults {
-		ui.update(g, state)
+	for {
+		select {
+		case state := <-ui.StateResults:
+			ui.update(g, state)
+		case status := <-ui.Status:
+			// fmt.Sprintf("Received a status update: %s", status)
+			ui.updateStatus(g, status)
+		}
 	}
+
+	// for state := range ui.StateResults {
+	// 	ui.update(g, state)
+	// }
+
+	// for status := range ui.Status {
+	// 	fmt.Sprintf("Received a status update: %s", status)
+	// }
+}
+
+func (ui *UI) updateStatus(g *gocui.Gui, status string) {
+	g.Update(func(g *gocui.Gui) error {
+		v, err := g.View(StatusView)
+		if err != nil {
+			return err
+		}
+		v.Clear()
+		fmt.Fprintln(v, status)
+
+		return nil
+	})
 }
 
 func (ui *UI) update(g *gocui.Gui, state state.GameState) {
@@ -125,7 +160,7 @@ func (ui *UI) showDebuffs(v *gocui.View, m map[string]state.Debuff) {
 	}
 }
 
-func (ui *UI) showSpells(v *gocui.View, m map[string]state.SpellMeta) {
+func (ui *UI) showSpells(v *gocui.View, m map[string]state.SpellData) {
 	keys := make([]string, 0, len(m))
 	for k := range m {
 		keys = append(keys, k)
@@ -133,7 +168,7 @@ func (ui *UI) showSpells(v *gocui.View, m map[string]state.SpellMeta) {
 	sort.Strings(keys)
 
 	for _, k := range keys {
-		ui.show(v, k, m[k])
+		ui.show(v, k, m[k].Keybind)
 	}
 }
 

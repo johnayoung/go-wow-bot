@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	POLL_INTERVAL_MS = 300
+	POLL_INTERVAL_MS = 110
 )
 
 func main() {
@@ -33,19 +33,22 @@ func main() {
 	g.SetManager(views...)
 
 	stateResults := make(chan state.GameState)
+	status := make(chan string)
 	errors := make(chan error)
 
 	agent := &agent.Agent{
-		Status:       "starting",
+		Status:       status,
 		UpdateTicker: updateTicker,
 		Errors:       errors,
 		StateManager: state.NewStateManager(),
 		StateResults: stateResults,
+		Actions:      agent.Actions,
 	}
 
 	ui := &ui.UI{
 		Errors:       errors,
 		StateResults: stateResults,
+		Status:       status,
 	}
 
 	go agent.Start()

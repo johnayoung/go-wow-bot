@@ -9,10 +9,9 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"sync"
 
-	"github.com/go-vgo/robotgo"
 	"github.com/johnayoung/go-wow-bot/utils"
-	"github.com/vcaesar/imgo"
 )
 
 type Member string
@@ -88,7 +87,6 @@ func getSpells() Spells {
 type StateManager struct {
 	coordinates []Cell
 	spells      Spells
-	reader      SquareReader
 }
 
 type GameState struct {
@@ -117,6 +115,23 @@ type GameState struct {
 	Misc               map[string]bool
 }
 
+func (g GameState) GetSpell(action string) SpellData {
+	if v, ok := g.Spells[action]; ok {
+		return v
+	} else {
+		return SpellData{
+			SpellMeta{},
+			"1",
+			false,
+			false,
+		}
+	}
+}
+
+func (g GameState) FindKeybind(action string) string {
+	return g.GetSpell(action).Keybind
+}
+
 type Pixel struct {
 	xMin,
 	yMin,
@@ -128,7 +143,6 @@ func NewStateManager() StateManager {
 	return StateManager{
 		coordinates: getCoordinates(),
 		spells:      getSpells(),
-		reader:      NewSquareReader(),
 	}
 }
 
@@ -141,29 +155,28 @@ func (s StateManager) Get() GameState {
 		xMax: 489,
 		yMax: 35,
 	}
-	bit := robotgo.CaptureScreen(pixel.xMin, pixel.yMin, pixel.xMax, pixel.yMax)
-	defer robotgo.FreeBitmap(bit)
 
-	// bitmap := robotgo.ToBitmap(bit)
+	img, err := CaptureScreenCoords(pixel)
+	if err != nil {
+		panic(err)
+	}
+	reader := NewSquareReader(img)
 
-	img := robotgo.ToImage(bit)
-	imgo.Save("test.png", img)
-
-	healthMax := s.reader.GetIntAtCell(coordinates[2])
-	healthCurrent := s.reader.GetIntAtCell(coordinates[3])
+	healthMax := reader.GetIntAtCell(coordinates[2])
+	healthCurrent := reader.GetIntAtCell(coordinates[3])
 	health := percent(healthCurrent, healthMax)
 
 	// Mana stats
-	manaMax := s.reader.GetIntAtCell(coordinates[4])
-	manaCurrent := s.reader.GetIntAtCell(coordinates[5])
+	manaMax := reader.GetIntAtCell(coordinates[4])
+	manaCurrent := reader.GetIntAtCell(coordinates[5])
 	mana := percent(manaCurrent, manaMax)
 	lowMana := mana < 30
 
-	energyMax := s.reader.GetIntAtCell(coordinates[8])
-	energyCurrent := s.reader.GetIntAtCell(coordinates[6])
-	comboPoints := s.reader.GetIntAtCell(coordinates[7])
+	energyMax := reader.GetIntAtCell(coordinates[6])
+	energyCurrent := reader.GetIntAtCell(coordinates[7])
+	comboPoints := reader.GetIntAtCell(coordinates[8])
 
-	rageCurrent := s.reader.GetIntAtCell(coordinates[9])
+	rageCurrent := reader.GetIntAtCell(coordinates[10])
 	rageMax := int64(100)
 
 	const numberOfBuffs = 20
@@ -171,30 +184,30 @@ func (s StateManager) Get() GameState {
 	const numberOfAbilities = 48
 	startFrame := 11
 
-	buffs := s.GetBuffBlock(startFrame, startFrame+numberOfBuffs)
+	buffs := s.GetBuffBlock(startFrame, startFrame+numberOfBuffs, reader)
 	startFrame += numberOfBuffs
 
-	debuffs := s.GetDebuffBlock(startFrame, startFrame+numberOfDebuffs)
+	debuffs := s.GetDebuffBlock(startFrame, startFrame+numberOfDebuffs, reader)
 	startFrame += numberOfDebuffs
 
-	targetDebuffs := s.GetDebuffBlock(startFrame, startFrame+numberOfDebuffs)
+	targetDebuffs := s.GetDebuffBlock(startFrame, startFrame+numberOfDebuffs, reader)
 	startFrame += numberOfDebuffs
 
-	spells := s.GetSpellBlock(startFrame, startFrame+numberOfAbilities)
+	spells := s.GetSpellBlock(startFrame, startFrame+numberOfAbilities, reader)
 	startFrame += numberOfAbilities
 
-	memberStatus := s.reader.GetIntAtCell(coordinates[startFrame])
+	memberStatus := reader.GetIntAtCell(coordinates[startFrame])
 	startFrame += 1
 
 	statusCoords := coordinates[startFrame]
-	memberCombatStatus := s.reader.GetIntAtCell(statusCoords)
+	memberCombatStatus := reader.GetIntAtCell(statusCoords)
 	startFrame += 1
-	memberMeleeRange := s.reader.GetIntAtCell(coordinates[startFrame])
+	memberMeleeRange := reader.GetIntAtCell(coordinates[startFrame])
 	startFrame += 1
-	dispel := s.reader.GetIntAtCell(coordinates[startFrame])
+	dispel := reader.GetIntAtCell(coordinates[startFrame])
 	startFrame += 1
 
-	miscBinary := s.reader.GetIntAtCell(coordinates[startFrame])
+	miscBinary := reader.GetIntAtCell(coordinates[startFrame])
 	// misList :=
 	startFrame += 1
 
@@ -238,27 +251,37 @@ type Debuff struct {
 	SpellMeta
 }
 
-func (s StateManager) getBlock(start, end int) []SpellMeta {
+func (s StateManager) getBlock(start, end int, reader SquareReader) []SpellMeta {
 	var spells []SpellMeta
-	for position := start; position < end; position++ {
-		counter := position - start
-		spellID := s.reader.GetIntAtCell(s.coordinates[position])
-		spellStr := strconv.FormatInt(spellID, 10)
 
-		if spell, ok := s.spells[spellStr]; ok {
-			spells = append(spells, SpellMeta{spellID: spellID, camelName: *spell.CamelName, counter: counter})
-		}
+	var wg sync.WaitGroup
+	total := end - start
+	wg.Add(total)
+	for position := start; position < end; position++ {
+		go func(position int) {
+			defer wg.Done()
+			counter := position - start
+			spellID := reader.GetIntAtCell(s.coordinates[position])
+			spellStr := strconv.FormatInt(spellID, 10)
+
+			if spell, ok := s.spells[spellStr]; ok {
+				spells = append(spells, SpellMeta{spellID: spellID, camelName: *spell.CamelName, counter: counter})
+			}
+		}(position)
 	}
+
+	wg.Wait()
 	return spells
 }
 
 func (s StateManager) GetBuffBlock(
 	start,
 	end int,
+	reader SquareReader,
 ) map[string]Buff {
 	var buffs = make(map[string]Buff)
 
-	spells := s.getBlock(start, end)
+	spells := s.getBlock(start, end, reader)
 	for _, spellMeta := range spells {
 		buffs[spellMeta.camelName] = Buff{SpellMeta: spellMeta, active: true}
 	}
@@ -269,10 +292,11 @@ func (s StateManager) GetBuffBlock(
 func (s StateManager) GetDebuffBlock(
 	start,
 	end int,
+	reader SquareReader,
 ) map[string]Debuff {
 	var debuffs = make(map[string]Debuff)
 
-	spells := s.getBlock(start, end)
+	spells := s.getBlock(start, end, reader)
 	for _, spellMeta := range spells {
 		debuffs[spellMeta.camelName] = Debuff{SpellMeta: spellMeta}
 	}
@@ -336,23 +360,23 @@ var keyBindings = map[int]string{
 
 type SpellData struct {
 	SpellMeta
-	keybind  string
-	castable bool
-	equipped bool
+	Keybind  string
+	Castable bool
+	Equipped bool
 }
 
 func (s StateManager) GetSpellBlock(
 	start,
 	end int,
+	reader SquareReader,
 ) map[string]SpellData {
 	var spellList = make(map[string]SpellData)
 
-	spells := s.getBlock(start, end)
+	spells := s.getBlock(start, end, reader)
 	for _, spellMeta := range spells {
-		meta := SpellMeta{spellID: spellMeta.spellID, camelName: spellMeta.camelName}
 		spellList[spellMeta.camelName] = SpellData{
 			spellMeta,
-			keyBindings[meta.counter],
+			keyBindings[spellMeta.counter],
 			true,
 			true,
 		}

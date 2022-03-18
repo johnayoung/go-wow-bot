@@ -2,10 +2,10 @@ package state
 
 import (
 	"fmt"
+	"image"
+	"image/color"
 	"log"
 	"strconv"
-
-	"github.com/go-vgo/robotgo"
 )
 
 type Cell struct {
@@ -14,20 +14,24 @@ type Cell struct {
 }
 
 type SquareReader struct {
-	// pixels robotgo.Bitmap
+	img *image.RGBA
 }
 
-func NewSquareReader() SquareReader {
-	return SquareReader{}
+func NewSquareReader(img *image.RGBA) SquareReader {
+	return SquareReader{img}
 	// return SquareReader{pixels: pixels}
+}
+
+func RGBtoHex(color color.RGBA) string {
+	return fmt.Sprintf("%02x%02x%02x", color.R, color.G, color.B)
 }
 
 // function to find the hexidecimal color of a pixel based on a given x,y coordinate
 func (s *SquareReader) GetColorAtCell(cell Cell) string {
-	return robotgo.GetPixelColor(cell.X, cell.Y)
+	return RGBtoHex(s.img.RGBAAt(cell.X, cell.Y))
 }
 
-// Converts a cell's hexideciml color code to decimal data
+// Converts a cell's RGBA color code to decimal data
 func (s *SquareReader) GetIntAtCell(cell Cell) int64 {
 	color := s.GetColorAtCell(cell)
 

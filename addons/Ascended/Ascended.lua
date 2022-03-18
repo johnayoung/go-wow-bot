@@ -305,8 +305,6 @@ function Ascended:CreateFrames(n)
 
             -- Member in melee range
             local memberMeleeRange = memberInMeleeRange()
-            DEFAULT_CHAT_FRAME:AddMessage(startFrame)
-            DEFAULT_CHAT_FRAME:AddMessage(memberMeleeRange)
             MakePixelSquareArr(integerToColor(memberMeleeRange), startFrame)
             startFrame = startFrame + 1
 
