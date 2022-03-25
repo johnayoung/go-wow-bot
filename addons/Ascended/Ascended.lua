@@ -308,6 +308,11 @@ function Ascended:CreateFrames(n)
             MakePixelSquareArr(integerToColor(memberMeleeRange), startFrame)
             startFrame = startFrame + 1
 
+            -- Member is moving
+            local memberMovementStatus = memberIsMoving()
+            MakePixelSquareArr(integerToColor(memberMovementStatus), startFrame)
+            startFrame = startFrame + 1
+
             -- Dispel
             local dispelTarget = getDispel()
             MakePixelSquareArr(integerToColor(dispelTarget), startFrame)
@@ -481,6 +486,15 @@ if GameBinaries == nil then
         end
     end
 
+    function getUnitIsMoving(unitID)
+        local moving = GetUnitSpeed(unitID)
+        if moving > 0 then
+            return 1
+        else
+            return 0
+        end
+    end
+
     function hasWeaponEnchant()
         local hwv, hwd, hwc, hweid, owv, owd = GetWeaponEnchantInfo()
 
@@ -603,6 +617,17 @@ if GameBinaries == nil then
         for i = 1, #members do
             local inMeleeRange = getUnitMeleeRange(members[i])
             local value = makeIndexBase2(inMeleeRange, i)
+            count = count + value
+        end
+        return count
+    end
+
+    -- Checks if member is moving
+    function memberIsMoving()
+        local count = 0
+        for i = 1, #members do
+            local isMoving = getUnitIsMoving(members[i])
+            local value = makeIndexBase2(isMoving, i)
             count = count + value
         end
         return count

@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	POLL_INTERVAL_MS = 110
+	POLL_INTERVAL_MS = 500
 )
 
 func main() {

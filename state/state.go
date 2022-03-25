@@ -49,40 +49,6 @@ var miscValue = []string{
 	"targetPurgeable",
 }
 
-func getCoordinates() []Cell {
-	pathToCoordinates := filepath.Join(utils.RootDir(), "state", "coordinates.json")
-	jsonFile, err := os.Open(pathToCoordinates)
-	if err != nil {
-		log.Fatal(err)
-	}
-	log.Print("Successfully opened coordinates.json")
-	defer jsonFile.Close()
-
-	byteValue, _ := ioutil.ReadAll(jsonFile)
-
-	var coordinates []Cell
-	json.Unmarshal([]byte(byteValue), &coordinates)
-
-	return coordinates
-}
-
-func getSpells() Spells {
-	pathToSpells := filepath.Join(utils.RootDir(), "state", "spells.json")
-	jsonFile, err := os.Open(pathToSpells)
-	if err != nil {
-		log.Fatal(err)
-	}
-	log.Print("Successfully opened spells.json")
-	defer jsonFile.Close()
-
-	byteValue, _ := ioutil.ReadAll(jsonFile)
-
-	var spells Spells
-	json.Unmarshal([]byte(byteValue), &spells)
-
-	return spells
-}
-
 type StateManager struct {
 	coordinates []Cell
 	spells      Spells
@@ -103,15 +69,16 @@ type GameState struct {
 	Dispel int64
 	Health,
 	Mana float64
-	LowMana            bool
-	Buffs              map[string]Buff
-	Debuffs            map[string]Debuff
-	TargetDebuffs      map[string]Debuff
-	Spells             map[string]SpellData
-	MemberStatus       map[string]bool
-	MemberCombatStatus map[string]bool
-	MemberMeleeRange   map[string]bool
-	Misc               map[string]bool
+	LowMana              bool
+	Buffs                map[string]Buff
+	Debuffs              map[string]Debuff
+	TargetDebuffs        map[string]Debuff
+	Spells               map[string]SpellData
+	MemberStatus         map[string]bool
+	MemberCombatStatus   map[string]bool
+	MemberMeleeRange     map[string]bool
+	MemberMovementStatus map[string]bool
+	Misc                 map[string]bool
 }
 
 func (g GameState) GetSpell(action string) SpellData {
@@ -203,6 +170,8 @@ func (s StateManager) Get() GameState {
 	startFrame += 1
 	memberMeleeRange := reader.GetIntAtCell(coordinates[startFrame])
 	startFrame += 1
+	memberMovementStatus := reader.GetIntAtCell(coordinates[startFrame])
+	startFrame += 1
 	dispel := reader.GetIntAtCell(coordinates[startFrame])
 	startFrame += 1
 
@@ -211,27 +180,28 @@ func (s StateManager) Get() GameState {
 	startFrame += 1
 
 	return GameState{
-		HealthMax:          healthMax,
-		HealthCurrent:      healthCurrent,
-		Health:             health,
-		ManaMax:            manaMax,
-		ManaCurrent:        manaCurrent,
-		Mana:               mana,
-		LowMana:            lowMana,
-		EnergyMax:          energyMax,
-		EnergyCurrent:      energyCurrent,
-		ComboPoints:        comboPoints,
-		RageMax:            rageMax,
-		RageCurrent:        rageCurrent,
-		Buffs:              buffs,
-		Debuffs:            debuffs,
-		TargetDebuffs:      targetDebuffs,
-		Spells:             spells,
-		MemberStatus:       s.GetBoolStatus(memberStatus, listOfMembers, "IsDead"),
-		MemberCombatStatus: s.GetBoolStatus(memberCombatStatus, listOfMembers, "InCombat"),
-		MemberMeleeRange:   s.GetBoolStatus(memberMeleeRange, listOfMembers, "InMeleeRange"),
-		Misc:               s.GetBoolStatus(miscBinary, miscValue, ""),
-		Dispel:             dispel,
+		HealthMax:            healthMax,
+		HealthCurrent:        healthCurrent,
+		Health:               health,
+		ManaMax:              manaMax,
+		ManaCurrent:          manaCurrent,
+		Mana:                 mana,
+		LowMana:              lowMana,
+		EnergyMax:            energyMax,
+		EnergyCurrent:        energyCurrent,
+		ComboPoints:          comboPoints,
+		RageMax:              rageMax,
+		RageCurrent:          rageCurrent,
+		Buffs:                buffs,
+		Debuffs:              debuffs,
+		TargetDebuffs:        targetDebuffs,
+		Spells:               spells,
+		MemberStatus:         s.GetBoolStatus(memberStatus, listOfMembers, "IsDead"),
+		MemberCombatStatus:   s.GetBoolStatus(memberCombatStatus, listOfMembers, "InCombat"),
+		MemberMeleeRange:     s.GetBoolStatus(memberMeleeRange, listOfMembers, "InMeleeRange"),
+		MemberMovementStatus: s.GetBoolStatus(memberMovementStatus, listOfMembers, "IsMoving"),
+		Misc:                 s.GetBoolStatus(miscBinary, miscValue, ""),
+		Dispel:               dispel,
 	}
 }
 
@@ -414,4 +384,38 @@ func percent(current int64, max int64) float64 {
 	diff := float64(current) / float64(max)
 
 	return diff * 100
+}
+
+func getCoordinates() []Cell {
+	pathToCoordinates := filepath.Join(utils.RootDir(), "state", "coordinates.json")
+	jsonFile, err := os.Open(pathToCoordinates)
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Print("Successfully opened coordinates.json")
+	defer jsonFile.Close()
+
+	byteValue, _ := ioutil.ReadAll(jsonFile)
+
+	var coordinates []Cell
+	json.Unmarshal([]byte(byteValue), &coordinates)
+
+	return coordinates
+}
+
+func getSpells() Spells {
+	pathToSpells := filepath.Join(utils.RootDir(), "state", "spells.json")
+	jsonFile, err := os.Open(pathToSpells)
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Print("Successfully opened spells.json")
+	defer jsonFile.Close()
+
+	byteValue, _ := ioutil.ReadAll(jsonFile)
+
+	var spells Spells
+	json.Unmarshal([]byte(byteValue), &spells)
+
+	return spells
 }

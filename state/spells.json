@@ -26333,5 +26333,41 @@
   },
   "9912": {
     "camelName": "wrath"
+  },
+  "20217": {
+    "camelName": "blessingOfKings"
+  },
+  "25296": {
+    "camelName": "aspectOfTheHawk"
+  },
+  "5116": {
+    "camelName": "concussiveShot"
+  },
+  "826679": {
+    "camelName": "compoundShot"
+  },
+  "24977": {
+    "camelName": "insectSwarm"
+  },
+  "51662": {
+    "camelName": "hungerForBlood"
+  },
+  "25898": {
+    "camelName": "greaterBlessingOfKings"
+  },
+  "10399": {
+    "camelName": "rockbiterWeapon"
+  },
+  "51722": {
+    "camelName": "dismantle"
+  },
+  "954518": {
+    "camelName": "capacitorTotem"
+  },
+  "3045": {
+    "camelName": "rapidFire"
+  },
+  "23028": {
+    "camelName": "arcaneBrilliance"
   }
 }

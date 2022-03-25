@@ -7,22 +7,47 @@ import (
 
 	"github.com/go-vgo/robotgo"
 	"github.com/johnayoung/go-wow-bot/state"
+	hook "github.com/robotn/gohook"
 )
 
 type Agent struct {
+	StateManager state.StateManager
+	Paused       bool
 	Status       chan<- string
 	UpdateTicker <-chan time.Time
-	Errors       chan<- error
-	StateManager state.StateManager
 	StateResults chan<- state.GameState
+	Errors       chan<- error
 	Actions      []Action
 }
 
 func (a *Agent) Start() {
 	log.Print("Starting agent.")
 
+	lshift := uint16(160)
+
+	hook.Register(hook.KeyHold, []string{}, func(e hook.Event) {
+		isLeftShift := e.Rawcode == lshift
+
+		if e.Kind == hook.KeyHold && isLeftShift {
+			fmt.Println("Status: Paused")
+		}
+	})
+
+	hook.Register(hook.KeyUp, []string{}, func(e hook.Event) {
+		isLeftShift := e.Rawcode == lshift
+
+		if e.Kind == hook.KeyUp && isLeftShift {
+			fmt.Println("Status: Running")
+		}
+	})
+
+	s := hook.Start()
+	defer hook.End()
+
 	for {
 		select {
+		case e := <-s:
+			a.pause(e)
 		case <-a.UpdateTicker:
 			err := a.evaluate()
 			if err != nil {
@@ -32,7 +57,24 @@ func (a *Agent) Start() {
 	}
 }
 
+func (a *Agent) pause(e hook.Event) {
+	lshift := uint16(160)
+	isLeftShift := e.Rawcode == lshift
+
+	if e.Kind == hook.KeyHold && isLeftShift {
+		a.Paused = true
+	} else if e.Kind == hook.KeyUp && isLeftShift {
+		a.Paused = false
+	} else {
+		// Do nothing
+	}
+}
+
 func (a *Agent) evaluate() error {
+	if a.Paused == true {
+		return nil
+	}
+
 	state := a.StateManager.Get()
 
 	go func() {
@@ -92,6 +134,10 @@ func (a *Agent) possibleActions(s state.GameState) []Action {
 		}
 	}
 	return validActions
+}
+
+func (a *Agent) isLeftShiftHeldDown() error {
+	return nil
 }
 
 func (a *Agent) GetBestAction(s state.GameState) (Action, int, error) {

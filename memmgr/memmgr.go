@@ -1,0 +1,5 @@
+package memmgr
+
+func ReadUint() {
+
+}

@@ -107,10 +107,11 @@ func (ui *UI) update(g *gocui.Gui, state state.GameState) {
 		v.Clear()
 		// ui.showDebuffs(v, state.Debuffs)
 		// ui.showMembers(v, state.MemberStatus)
-		ui.showMembers(v, state.MemberCombatStatus)
-		ui.showMembers(v, state.MemberMeleeRange)
-		ui.show(v, "Dispel", state.Dispel)
-		ui.showMembers(v, state.Misc)
+		ui.showMembers(v, state.MemberMovementStatus)
+		// ui.showMembers(v, state.MemberCombatStatus)
+		// ui.showMembers(v, state.MemberMeleeRange)
+		// ui.show(v, "Dispel", state.Dispel)
+		// ui.showMembers(v, state.Misc)
 
 		// Target Debuffs
 		v, err = g.View(TargetDebuffsView)
