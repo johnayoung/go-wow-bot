@@ -17,7 +17,7 @@ dllbuild:
 	set CXX=i686-w64-mingw32-g++
 	set GOARCH=386
 	set CGO_ENABLED=1
-	go build -i -v -o ${OUT}.dll -buildmode=c-shared ${DLLMAIN}.go
+	go build -v -o ${OUT}.dll -buildmode=c-shared -ldflags "-s -w" ${DLLMAIN}.go
 
 dllexe:
 	set CC=i686-w64-mingw32-gcc
@@ -28,3 +28,10 @@ dllexe:
 
 bootstrapper:
 	go run cmd/bootstrapper/main.go
+
+bs2:
+	go run cmd/bs2/main.go
+
+loaderdll:
+	gcc -c -DBUILD_DLL cmd/dllmain/dllmain.cpp
+	gcc -shared -o cmd/dllmain/mainSRC.dll cmd/dllmain/dllmain.o -Wl,--add-stdcall-alias

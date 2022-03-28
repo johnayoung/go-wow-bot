@@ -1,0 +1,63 @@
+package main
+
+import (
+	"fmt"
+	"path/filepath"
+
+	"github.com/JamesHovious/w32"
+	"github.com/johnayoung/go-wow-bot/utils"
+)
+
+func main() {
+	// srcPath := filepath.Join(utils.RootDir(), "bloog", "bloogq.exe")
+	dllname := filepath.Join(utils.RootDir(), "cmd", "dllmain", "mainSRC.dll")
+
+	pid := "00007098"
+	processAddr, err := w32.HexToUint32(pid)
+	if err != nil {
+		fmt.Println("Error with process address:", err.Error())
+		return
+	}
+
+	// open process
+	hdlr, err := w32.OpenProcess(w32.PROCESS_ALL_ACCESS, false, processAddr)
+	if err != nil {
+		panic(err)
+	}
+	defer w32.CloseHandle(hdlr)
+
+	// malloc space to write dll name
+	dlllen := len(dllname)
+	dllnameaddr, err := w32.VirtualAllocEx(hdlr, 0, dlllen, w32.MEM_COMMIT, w32.PAGE_EXECUTE_READWRITE)
+	if err != nil {
+		panic(err)
+	}
+
+	data, err := w32.ReadProcessMemoryAsUint32(hdlr, uint32(dllnameaddr))
+	if err != nil {
+		fmt.Println("Error Reading memory:", err.Error())
+		return
+	} else {
+		fmt.Println("Success! Read memory:", data)
+	}
+
+	err = w32.WriteProcessMemoryAsUint32(hdlr, uint32(dllnameaddr), data)
+	if err != nil {
+		fmt.Println("Error Writing memory:", err.Error())
+		return
+	} else {
+		fmt.Println("Success! Write memory:")
+	}
+
+	// // write dll name
+	// err = w32.WriteProcessMemory(hdlr, uint32(dllnameaddr), []byte(dllname), uint(dlllen))
+	// if err != nil {
+	// 	panic(err)
+	// }
+
+	// // test
+	// tecase, _ := w32.ReadProcessMemory(hdlr, uint32(dllnameaddr), uint(dlllen))
+	// if string(tecase) != dllname {
+	// 	panic("write dll name error")
+	// }
+}

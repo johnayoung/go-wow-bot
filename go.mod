@@ -3,6 +3,7 @@ module github.com/johnayoung/go-wow-bot
 go 1.17
 
 require (
+	github.com/JamesHovious/w32 v1.2.0
 	github.com/go-vgo/robotgo v0.100.10
 	github.com/gofrs/uuid v4.2.0+incompatible
 	github.com/jroimartin/gocui v0.5.0
@@ -19,6 +20,7 @@ require (
 	github.com/mattn/go-runewidth v0.0.9 // indirect
 	github.com/nsf/termbox-go v1.1.1 // indirect
 	github.com/otiai10/gosseract v2.2.1+incompatible // indirect
+	github.com/pkg/errors v0.9.1 // indirect
 	github.com/power-devops/perfstat v0.0.0-20210106213030-5aafc221ea8c // indirect
 	github.com/robotn/xgb v0.0.0-20190912153532-2cb92d044934 // indirect
 	github.com/robotn/xgbutil v0.0.0-20190912154524-c861d6f87770 // indirect

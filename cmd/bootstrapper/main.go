@@ -9,9 +9,9 @@ import (
 
 func main() {
 	srcPath := filepath.Join(utils.RootDir(), "bloog", "bloogq.exe")
-	destPath := filepath.Join(utils.RootDir(), "cmd", "dllmain", "mainSRC.dll")
+	dllPath := filepath.Join(utils.RootDir(), "cmd", "dllmain", "mainSRC.dll")
 
-	inject.RunHollow(srcPath, destPath)
+	inject.InjectDLL32(srcPath, dllPath)
 
 	for {
 	}
